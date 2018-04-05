@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>gtec_gazebosensorplugins</name>
+  <version>0.0.0</version>
+  <description>The gtec_gazebosensorplugins package</description>
+
+  <maintainer email="valentin.barral@gtec.udc.es">Valentin Barral</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>gazebo_ros</build_depend>
+  <build_depend>roscpp</build_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>roscpp</run_depend>
+  <build_depend>gtec_msgs</build_depend>
+  <run_depend>gtec_msgs</run_depend>
+
+  <export>
+    <gazebo_ros plugin_path="${prefix}/lib" gazebo_media_path="${prefix}" />
+  </export>
+</package>
