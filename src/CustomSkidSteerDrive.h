@@ -1,4 +1,4 @@
-s/*
+/*
  * Copyright (c) 2010, Daniel Hewlett, Antons Rebguns
  *  All rights reserved.
  *

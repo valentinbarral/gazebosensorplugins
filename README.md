@@ -2,6 +2,19 @@
 
 This project contains several plugins to use in Gazebo simulator:
 
+## Requirements
+
+Libraries ```libignition-math4-dev``` and ```libgazebo9-dev``` must be installed before building this package.
+
+Also, package ```gtec_msgs``` must be present in the same work space. This package can be found here:  [https://github.com/valentinbarral/rosmsgs](https://github.com/valentinbarral/rosmsgs)
+
+## Build
+
+After cloning the repository in a catkin workspace:
+```
+$ catkin_make
+```
+
 ## UWB Plugin
 
 This plugin models a UWB sensor based on the DW1000 module from Decawave. The plugin simulates the reception of UWB ranging measurements from a set of anchors placed on the scenario. The plugin publish then the next ROS topic: 

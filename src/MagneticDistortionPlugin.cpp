@@ -67,7 +67,8 @@ public: void Load(sensors::SensorPtr sensor, sdf::ElementPtr _sdf)
     }
 
     this->world = physics::get_world(sensor->WorldName());
-    physics::EntityPtr entity = this->world->GetEntity(sensor->ParentName());
+    physics::EntityPtr entity = this->world->EntityByName(sensor->ParentName());
+
     this->link = boost::dynamic_pointer_cast<physics::Link>(entity);
     this->parentSensor = std::dynamic_pointer_cast<sensors::MagnetometerSensor>(sensor);
     // TODO: prefijo configurable
@@ -85,8 +86,8 @@ public: void Load(sensors::SensorPtr sensor, sdf::ElementPtr _sdf)
 public: void OnUpdate(sensors::SensorPtr)
   {
     ignition::math::Vector3d magneticField = this->parentSensor->MagneticField();
-    ignition::math::Pose3d sensorPose = this->link->GetWorldPose().Ign();
-    physics::Model_V models = this->world->GetModels();
+    ignition::math::Pose3d sensorPose = this->link->WorldPose();
+    physics::Model_V models = this->world->Models();
 
     ignition::math::Vector3d interference;
     for (physics::Model_V::iterator iter = models.begin(); iter != models.end(); ++iter)
@@ -94,7 +95,7 @@ public: void OnUpdate(sensors::SensorPtr)
       if ((*iter)->GetName().find(this->interfererPrefix) == 0)
       {
         physics::ModelPtr interferer = *iter;
-        ignition::math::Pose3d interfererPose = interferer->GetWorldPose().Ign();
+        ignition::math::Pose3d interfererPose = interferer->WorldPose();
         double distance = sensorPose.Pos().Distance(interfererPose.Pos());
         ignition::math::Vector3d interfererDirection = interfererPose.Pos() - sensorPose.Pos();
         interference += interfererDirection / (distance * distance);
@@ -107,7 +108,7 @@ public: void OnUpdate(sensors::SensorPtr)
     ignition::math::Vector3d finalField = magneticField + interference;
     msgs::Magnetometer magMsg;
     msgs::Set(magMsg.mutable_field_tesla(), finalField);
-    msgs::Set(magMsg.mutable_time(), this->world->GetSimTime());
+    msgs::Set(magMsg.mutable_time(), this->world->SimTime());
     if (this->magPub)
     {
       this->magPub->Publish(magMsg);

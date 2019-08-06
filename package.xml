@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
-  <name>gtec_gazebosensorplugins</name>
+  <name>gazebosensorplugins</name>
   <version>0.0.0</version>
-  <description>The gtec_gazebosensorplugins package</description>
+  <description>The gazebosensorplugins package. Includes some plugins for Gazebo 9</description>
 
-  <maintainer email="valentin.barral@gtec.udc.es">Valentin Barral</maintainer>
+  <maintainer email="valentin.barral@udc.es">Valentin Barral</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>catkin</buildtool_depend>

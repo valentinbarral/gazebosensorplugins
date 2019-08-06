@@ -150,6 +150,17 @@ class UwbPlugin : public ModelPlugin
     { -50, -78.9 }
   };
 
+double normalDis[8][2] = {
+  {0.80 , 1.281552},
+  {0.90 , 1.644854},
+  {0.95 , 1.959964},
+  {0.98 , 2.326348},
+  {0.99 , 2.575829},
+  {0.995 , 2.807034},
+  {0.998 , 3.090232},
+  {0.999 , 3.290527}
+};
+
 public: UwbPlugin() :
     ModelPlugin(),
     sequence(0)
@@ -166,7 +177,7 @@ public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
       return;
     }
 
-    //ROS_INFO("Hello World!");
+    ROS_INFO("UWB Plugin running");
 
     this->model = _parent;
     this->world = _parent->GetWorld();
@@ -195,20 +206,37 @@ public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
       this->frequency = 2.5e9;
     }
 
+    this->hasHideRangings = false;
+
+    if (_sdf->HasElement("hide_rangings"))
+    {
+      this->hideRangingsPer = _sdf->Get<double>("hide_rangings");
+      this->hasHideRangings = true;
+      this->hideNoiseModel = sensors::NoiseFactory::NewNoiseModel(_sdf->GetElement("hide_noise"));
+    }
+
     this->interfererPrefix = "interferer_";
 
     this->lastUpdateTime = common::Time(0.0);
     this->noiseModel = sensors::NoiseFactory::NewNoiseModel(_sdf->GetElement("noise"));
+    sensors::NoisePtr anchorsNoiseModel = sensors::NoiseFactory::NewNoiseModel(_sdf->GetElement("anchors_noise"));
+    
+    //TODO: get num anchors
+    for (int i = 0; i < 6; ++i)
+    {
+      ignition::math::Vector3d anchorNoiseValue(anchorsNoiseModel->Apply(0),anchorsNoiseModel->Apply(0),anchorsNoiseModel->Apply(0));
+      this->anchorNoises[i].Set(anchorNoiseValue.X(), anchorNoiseValue.Y(),anchorNoiseValue.Z());
+
+      ROS_INFO("UWB Plugin Anchor: %d Noise (%f, %f, %f)", i, anchorNoiseValue.X(),anchorNoiseValue.Y(),anchorNoiseValue.Z());
+    }
 
     ros::NodeHandle n;
     this->gtecUwbPub = n.advertise<gtec_msgs::GenericRanging>("/gtec/gazebo/ranging", 1000);
-    this->gtecRealPos = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("/gtec/gazebo/pos", 1000);
     this->gtecAnchors = n.advertise<visualization_msgs::MarkerArray>("/gtec/gazebo/anchors", 1000);
     this->gtecMagneticInterferences = n.advertise<visualization_msgs::MarkerArray>("/gtec/gazebo/magnetic/interferences", 1000);
     this->testRay = boost::dynamic_pointer_cast<physics::RayShape>(
-                      this->world->GetPhysicsEngine()->CreateShape("ray", physics::CollisionPtr()));
-    ROS_INFO("UWB Plugin running");
-
+                      this->world->Physics()->CreateShape("ray", physics::CollisionPtr()));
+    
     this->updateConnection =
       event::Events::ConnectWorldUpdateBegin(boost::bind(&UwbPlugin::OnUpdate, this, _1));
   }
@@ -221,19 +249,28 @@ public: void OnUpdate(const common::UpdateInfo &_info)
     if (elapsed >= this->updatePeriod)
     {
       this->lastUpdateTime = _info.simTime;
-      ignition::math::Pose3d tagPose = this->tagLink->GetWorldPose().Ign();
+      ignition::math::Pose3d tagPose = this->tagLink->WorldPose();
       visualization_msgs::MarkerArray markerArray;
       visualization_msgs::MarkerArray interferencesArray;
       int interferenceId = 0;
 
-      physics::Model_V models = this->world->GetModels();
+      physics::Model_V models = this->world->Models();
       for (physics::Model_V::iterator iter = models.begin(); iter != models.end(); ++iter)
       {
         if ((*iter)->GetName().find(this->anchorPrefix) == 0) {
           physics::ModelPtr anchor = *iter;
           std::string aidStr = anchor->GetName().substr(this->anchorPrefix.length());
           int aid = std::stoi(aidStr);
-          ignition::math::Pose3d anchorPose = anchor->GetWorldPose().Ign();
+          ignition::math::Pose3d anchorPose = anchor->WorldPose();
+
+          //We add the anchor noise
+          ignition::math::Pose3d anchorPoseWithNoise = anchor->WorldPose();
+          ignition::math::Vector3d anchorNoise = this->anchorNoises[aid];
+          ignition::math::Vector3d anchorPosition = anchorPoseWithNoise.Pos();
+          anchorPoseWithNoise.Set(anchorPosition+anchorNoise, anchorPoseWithNoise.Rot());
+
+        //ROS_INFO("UWB Plugin AnchorWithNoise: %d Noise (%f, %f, %f)", aid, anchorPoseWithNoise.Pos().X(),anchorPoseWithNoise.Pos().Y(),anchorPoseWithNoise.Pos().Z());
+ 
 
           // Comprobar obstáculos
           double distanceToObstacle;
@@ -245,8 +282,8 @@ public: void OnUpdate(const common::UpdateInfo &_info)
 
           //this->testRay->SetPoints(tagPose.Pos() + 0.5 * (anchorPose.Pos() - tagPose.Pos()), anchorPose.Pos());
 
-          ignition::math::Vector3d directionToAnchor = (anchorPose.Pos() - tagPose.Pos()).Normalize();
-          this->testRay->SetPoints(tagPose.Pos() + directionToAnchor, anchorPose.Pos());
+          ignition::math::Vector3d directionToAnchor = (anchorPoseWithNoise.Pos() - tagPose.Pos()).Normalize();
+          this->testRay->SetPoints(tagPose.Pos() + directionToAnchor, anchorPoseWithNoise.Pos());
 
           this->testRay->GetIntersection(distanceToObstacle, obstacleName);
           if (obstacleName != "")
@@ -254,7 +291,7 @@ public: void OnUpdate(const common::UpdateInfo &_info)
             // penalty = distanceToObstacle;
           }
 
-          double distance = tagPose.Pos().Distance(anchorPose.Pos()) + penalty;
+          double distance = tagPose.Pos().Distance(anchorPoseWithNoise.Pos()) + penalty;
           double distanceNoise = ApplyNoiseModel(distance);
           double rxPower = RxPowerEstimated(RxPower(distance))
                            + std::abs(ignition::math::Rand::DblNormal(0.0, powerVar));
@@ -267,10 +304,28 @@ public: void OnUpdate(const common::UpdateInfo &_info)
           ranging_msg.seq = this->sequence;
           ranging_msg.rxPower = rxPower; // Realmente se espera en otro formato...
 
-          this->gtecUwbPub.publish(ranging_msg);
+          if (this->hasHideRangings){
+            double disVal = 4;
+            for (int i = 0; i < 8; ++i)
+            {
+              if (hideRangingsPer==normalDis[i][0]){
+                disVal = normalDis[i][1];
+                break;
+              }
+            }
+
+            double testVal = hideNoiseModel->Apply(0);
+            if (testVal<disVal){
+               this->gtecUwbPub.publish(ranging_msg);
+            }
+
+          } else {
+            this->gtecUwbPub.publish(ranging_msg);
+          }
+          
 
           visualization_msgs::Marker marker;
-          marker.header.frame_id = "world";
+          marker.header.frame_id = "map";
           marker.header.stamp = ros::Time();
           marker.id = aid;
           marker.type = visualization_msgs::Marker::CYLINDER;
@@ -326,10 +381,10 @@ public: void OnUpdate(const common::UpdateInfo &_info)
         } else if ((*iter)->GetName().find(this->interfererPrefix) == 0) {
 
           physics::ModelPtr interferer = *iter;
-          ignition::math::Pose3d interfererPose = interferer->GetWorldPose().Ign();
+          ignition::math::Pose3d interfererPose = interferer->WorldPose();
 
           visualization_msgs::Marker marker;
-          marker.header.frame_id = "world";
+          marker.header.frame_id = "map";
           marker.header.stamp = ros::Time();
           marker.id = interferenceId;
           interferenceId+=1;
@@ -358,20 +413,6 @@ public: void OnUpdate(const common::UpdateInfo &_info)
 
       this->gtecAnchors.publish(markerArray);
       this->gtecMagneticInterferences.publish(interferencesArray);
-
-      geometry_msgs::PoseWithCovarianceStamped pose;
-      pose.pose.pose.position.x = tagPose.Pos().X();
-      pose.pose.pose.position.y = tagPose.Pos().Y();
-      pose.pose.pose.position.z = tagPose.Pos().Z();
-      pose.pose.pose.orientation.x = tagPose.Rot().X();
-      pose.pose.pose.orientation.y = tagPose.Rot().Y();
-      pose.pose.pose.orientation.z = tagPose.Rot().Z();
-      pose.pose.pose.orientation.w = tagPose.Rot().W();
-      pose.header.frame_id = "world";
-      pose.header.stamp = ros::Time::now();
-
-      this->gtecRealPos.publish(pose);
-
       this->sequence++;
     }
   }
@@ -453,6 +494,7 @@ private: event::ConnectionPtr updateConnection;
 private: common::Time updatePeriod;
 private: common::Time lastUpdateTime;
 private: sensors::NoisePtr noiseModel;
+private: sensors::NoisePtr hideNoiseModel;
 private: double power;
 private: double txGain;
 private: double rxGain;
@@ -461,10 +503,12 @@ private: std::string anchorPrefix;
 private: std::string interfererPrefix;
 private: physics::LinkPtr tagLink;
 private: ros::Publisher gtecUwbPub;
-private: ros::Publisher gtecRealPos;
 private: ros::Publisher gtecAnchors;
 private: ros::Publisher gtecMagneticInterferences;
 private: unsigned char sequence;
+private: ignition::math::Vector3d anchorNoises[10];
+private: bool hasHideRangings;
+private: double hideRangingsPer;
 };
 
 GZ_REGISTER_MODEL_PLUGIN(UwbPlugin)

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(gtec_gazebosensorplugins)
+project(gazebosensorplugins)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
