@@ -219,6 +219,10 @@ public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
 
     this->lastUpdateTime = common::Time(0.0);
     this->noiseModel = sensors::NoiseFactory::NewNoiseModel(_sdf->GetElement("noise"));
+    
+
+  if (_sdf->HasElement("anchors_noise"))
+    {
     sensors::NoisePtr anchorsNoiseModel = sensors::NoiseFactory::NewNoiseModel(_sdf->GetElement("anchors_noise"));
     
     //TODO: get num anchors
@@ -229,6 +233,7 @@ public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
 
       ROS_INFO("UWB Plugin Anchor: %d Noise (%f, %f, %f)", i, anchorNoiseValue.X(),anchorNoiseValue.Y(),anchorNoiseValue.Z());
     }
+  }
 
     ros::NodeHandle n;
     this->gtecUwbPub = n.advertise<gtec_msgs::GenericRanging>("/gtec/gazebo/ranging", 1000);
