@@ -17,7 +17,7 @@ $ catkin_make
 
 ## UWB Plugin
 
-[GTEC UWB Plugin in RVIZ](https://i.imgur.com/4Zll0sq.png)
+![GTEC UWB Plugin in RVIZ](https://user-images.githubusercontent.com/38099967/64428790-e66b6780-d0b4-11e9-8f6f-489d8eb949c8.png)
 
 This plugin simulates a UWB tag sensor. The plugin simulates the reception of UWB ranging measurements from a set of anchors placed on the scenario. The plugin also produces different measurements depending on the type of line of sight between the tag and each anchor. Thus, four models are considered:
 
