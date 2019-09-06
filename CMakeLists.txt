@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   gtec_msgs
+  tf
 )
 
 # Depend on system install of Gazebo
@@ -26,22 +27,21 @@ find_package(gazebo REQUIRED)
 link_directories(${GAZEBO_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
-add_library(gtec_gazebosensorplugins src/UwbPlugin.cpp)
-target_link_libraries(gtec_gazebosensorplugins ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(gtec_gazebosensorplugins ${catkin_EXPORTED_TARGETS})
+add_library(gtec_uwb_plugin src/UwbPlugin.cpp)
+target_link_libraries(gtec_uwb_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(gtec_uwb_plugin ${catkin_EXPORTED_TARGETS})
 
-add_library(magnetic_distortion_plugin src/MagneticDistortionPlugin.cpp)
-target_link_libraries(magnetic_distortion_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(magnetic_distortion_plugin ${catkin_EXPORTED_TARGETS})
-
-##add_library(rtls_actor_plugin src/RTLSActorPlugin.cpp src/RTLSActorPlugin.hh)
-##target_link_libraries(rtls_actor_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
-##add_dependencies(rtls_actor_plugin ${catkin_EXPORTED_TARGETS})
+add_library(gtec_magnetic_distortion_plugin src/MagneticDistortionPlugin.cpp)
+target_link_libraries(gtec_magnetic_distortion_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(gtec_magnetic_distortion_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(custom_skid_steer_drive src/CustomSkidSteerDrive.cpp src/CustomSkidSteerDrive.h)
 target_link_libraries(custom_skid_steer_drive ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(custom_skid_steer_drive ${catkin_EXPORTED_TARGETS})
 
+add_library(gtec_tag_pos_publisher_plugin src/TagPosPublisherPlugin.cpp)
+target_link_libraries(gtec_tag_pos_publisher_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(gtec_tag_pos_publisher_plugin ${catkin_EXPORTED_TARGETS})
 
 catkin_package(
   DEPENDS 

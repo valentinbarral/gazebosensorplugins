@@ -14,6 +14,7 @@
   <run_depend>roscpp</run_depend>
   <build_depend>gtec_msgs</build_depend>
   <run_depend>gtec_msgs</run_depend>
+  <run_depend>tf</run_depend>
 
   <export>
     <gazebo_ros plugin_path="${prefix}/lib" gazebo_media_path="${prefix}" />
