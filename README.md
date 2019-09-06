@@ -17,6 +17,8 @@ $ catkin_make
 
 ## UWB Plugin
 
+[GTEC UWB Plugin in RVIZ](https://i.imgur.com/4Zll0sq.png)
+
 This plugin simulates a UWB tag sensor. The plugin simulates the reception of UWB ranging measurements from a set of anchors placed on the scenario. The plugin also produces different measurements depending on the type of line of sight between the tag and each anchor. Thus, four models are considered:
 
 - LOS (Line of Sight): In this case there are no obstacles between the tag and the anchor. In this case, the ranging estimation is near to the actual value.
