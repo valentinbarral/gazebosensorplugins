@@ -39,6 +39,13 @@ public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
 
     this->model = _parent;
     this->world = _parent->GetWorld();
+    this->zOffset = 0.0;
+
+    if (_sdf->HasElement("z_offset"))
+    {
+      this->zOffset= _sdf->Get<double>("z_offset");
+    } 
+
     if (_sdf->HasElement("update_rate"))
     {
       this->SetUpdateRate(_sdf->Get<double>("update_rate"));
@@ -73,7 +80,7 @@ public: void OnUpdate(const common::UpdateInfo &_info)
       geometry_msgs::PoseWithCovarianceStamped pose;
       pose.pose.pose.position.x = tagPose.Pos().X();
       pose.pose.pose.position.y = tagPose.Pos().Y();
-      pose.pose.pose.position.z = tagPose.Pos().Z();
+      pose.pose.pose.position.z = tagPose.Pos().Z() + this->zOffset;
       pose.pose.pose.orientation.x = tagPose.Rot().X();
       pose.pose.pose.orientation.y = tagPose.Rot().Y();
       pose.pose.pose.orientation.z = tagPose.Rot().Z();
@@ -141,6 +148,7 @@ private: physics::LinkPtr tagLink;
 private: unsigned char sequence;
 private: ros::Publisher gtecRealPos;
 private: ros::Publisher gtecRealPosOdom;
+private: double zOffset;
 
 };
 
