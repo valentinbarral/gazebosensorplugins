@@ -1057,7 +1057,9 @@ namespace gazebo
                             {
                                 losType = NLOS;
                             }
-                            else
+                            
+
+                            if (losType!=NLOS)
                             {
                                 gtec_msgs::Ranging ranging_msg;
                                 ranging_msg.anchorId = aid;
