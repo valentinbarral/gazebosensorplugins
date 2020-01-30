@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 Group of Electronic Technology and Communications. University of A Coruña.
+Copyright (c) 2020 Group of Electronic Technology and Communications. University of A Coruna.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
