@@ -719,16 +719,14 @@ namespace gazebo
 
             this->lastUpdateTime = common::Time(0.0);
 
-            std::ostringstream stringStream;
-            stringStream << "/gtec/gazebo/uwb/ranging/" << this->tagId;
-            std::string topicRanging = stringStream.str();
+            std::string topicRanging = "/gtec/toa/ranging";
 
             ROS_INFO("GTEC UWB Plugin Ranging Publishing in %s", topicRanging.c_str());
 
-            stringStream.str("");
+/*            stringStream.str("");
             stringStream.clear();
-            stringStream << "/gtec/gazebo/uwb/anchors/" << this->tagId;
-            std::string topicAnchors = stringStream.str();
+            stringStream << "/gtec/toa/anchors" << this->tagId;*/
+            std::string topicAnchors = "/gtec/toa/anchors";
 
             ROS_INFO("GTEC UWB Plugin Anchors Position Publishing in %s", topicAnchors.c_str());
 
